@@ -14,7 +14,7 @@ interface PresentationState {
 }
 
 type PresentationAction =
-  | { type: 'SET_PRESENTATION'; payload: Presentation }
+  | { type: 'SET_PRESENTATION'; payload: Presentation | null }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'ADD_SLIDE'; payload: { slide: Slide; index?: number } }
   | { type: 'DELETE_SLIDE'; payload: string }

@@ -1,45 +1,47 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { usePresentation } from '@/app/contexts/PresentationContext';
-import { exportToPDF, exportToHTML } from '@/app/utils/exportUtils';
-import { 
-  Save, 
-  Download, 
-  Upload, 
-  Play, 
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { usePresentation } from "@/app/contexts/PresentationContext";
+import { exportToPDF, exportToHTML } from "@/app/utils/exportUtils";
+import {
+  Save,
+  Download,
+  Upload,
+  Play,
   FileText,
   Menu,
   X,
-  Presentation
-} from 'lucide-react';
+  Presentation,
+} from "lucide-react";
+import { AIContentGenerator } from "@/app/components/AIContentGenerator";
+import { AIPresentationGenerator } from "@/app/components/AIPresentationGenerator";
 
 export function Header() {
-  const { 
-    presentation, 
-    savePresentation, 
+  const {
+    presentation,
+    savePresentation,
     createNewPresentation,
     dispatch,
-    isPresentationMode 
+    isPresentationMode,
   } = usePresentation();
-  
+
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [title, setTitle] = useState(presentation?.title || '');
+  const [title, setTitle] = useState(presentation?.title || "");
 
   const handleSave = () => {
     if (presentation && title !== presentation.title) {
-      dispatch({ 
-        type: 'UPDATE_THEME', 
-        payload: { ...presentation.theme }
+      dispatch({
+        type: "UPDATE_THEME",
+        payload: { ...presentation.theme },
       });
     }
     savePresentation();
   };
 
   const handleNewPresentation = () => {
-    const newTitle = prompt('Enter presentation title:') || 'New Presentation';
+    const newTitle = prompt("Enter presentation title:") || "New Presentation";
     createNewPresentation(newTitle);
     setTitle(newTitle);
   };
@@ -57,7 +59,7 @@ export function Header() {
   };
 
   const handlePresentationMode = () => {
-    dispatch({ type: 'SET_PRESENTATION_MODE', payload: true });
+    dispatch({ type: "SET_PRESENTATION_MODE", payload: true });
   };
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,7 +67,7 @@ export function Header() {
     if (presentation) {
       // Update presentation title in context
       const updatedPresentation = { ...presentation, title: e.target.value };
-      dispatch({ type: 'SET_PRESENTATION', payload: updatedPresentation });
+      dispatch({ type: "SET_PRESENTATION", payload: updatedPresentation });
     }
   };
 
@@ -76,11 +78,17 @@ export function Header() {
       <div className="flex items-center justify-between">
         {/* Logo and Title */}
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
+          <div
+            className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() =>
+              dispatch({ type: "SET_PRESENTATION", payload: null })
+            }
+            title="Go to Home"
+          >
             <Presentation className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">Presentation Builder</span>
+            <span className="text-xl font-bold text-gray-900">Slide.Ai</span>
           </div>
-          
+
           {presentation && (
             <div className="hidden md:block">
               <Input
@@ -100,23 +108,27 @@ export function Header() {
             New
           </Button>
           
+          <AIPresentationGenerator />
+
           {presentation && (
             <>
+              <AIContentGenerator />
+              
               <Button variant="outline" size="sm" onClick={handleSave}>
                 <Save className="h-4 w-4 mr-2" />
                 Save
               </Button>
-              
+
               <Button variant="outline" size="sm" onClick={handleExportPDF}>
                 <Download className="h-4 w-4 mr-2" />
                 Export PDF
               </Button>
-              
+
               <Button variant="outline" size="sm" onClick={handleExportHTML}>
                 <Upload className="h-4 w-4 mr-2" />
                 Export HTML
               </Button>
-              
+
               <Button size="sm" onClick={handlePresentationMode}>
                 <Play className="h-4 w-4 mr-2" />
                 Present
@@ -132,7 +144,11 @@ export function Header() {
             size="sm"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
-            {isMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+            {isMenuOpen ? (
+              <X className="h-4 w-4" />
+            ) : (
+              <Menu className="h-4 w-4" />
+            )}
           </Button>
         </div>
       </div>
@@ -150,30 +166,34 @@ export function Header() {
               />
             </div>
           )}
-          
+
           <div className="flex flex-col space-y-2">
             <Button variant="outline" size="sm" onClick={handleNewPresentation}>
               <FileText className="h-4 w-4 mr-2" />
               New Presentation
             </Button>
             
+            <AIPresentationGenerator />
+
             {presentation && (
               <>
+                <AIContentGenerator />
+                
                 <Button variant="outline" size="sm" onClick={handleSave}>
                   <Save className="h-4 w-4 mr-2" />
                   Save
                 </Button>
-                
+
                 <Button variant="outline" size="sm" onClick={handleExportPDF}>
                   <Download className="h-4 w-4 mr-2" />
                   Export PDF
                 </Button>
-                
+
                 <Button variant="outline" size="sm" onClick={handleExportHTML}>
                   <Upload className="h-4 w-4 mr-2" />
                   Export HTML
                 </Button>
-                
+
                 <Button size="sm" onClick={handlePresentationMode}>
                   <Play className="h-4 w-4 mr-2" />
                   Present

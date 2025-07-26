@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { usePresentation } from '@/app/contexts/PresentationContext';
 import { templates } from '@/app/data/templates';
-import { FileText, Plus, Presentation } from 'lucide-react';
+import { FileText, Plus, Presentation, Sparkles } from 'lucide-react';
+import { AIPresentationGenerator } from '@/app/components/AIPresentationGenerator';
 
 export function WelcomeScreen() {
   const { createNewPresentation, addSlideFromTemplate } = usePresentation();
@@ -36,9 +37,9 @@ export function WelcomeScreen() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center mb-4">
             <Presentation className="h-12 w-12 text-blue-600 mr-4" />
-            <h1 className="text-4xl font-bold text-gray-900">Presentation Builder</h1>
+            <h1 className="text-4xl font-bold text-gray-900">Slide.Ai</h1>
           </div>
-          <p className="text-xl text-gray-600">Create beautiful presentations with ease</p>
+          <p className="text-xl text-gray-600">Create presentations with ease</p>
         </div>
 
         {/* New Presentation Card */}
@@ -69,6 +70,17 @@ export function WelcomeScreen() {
                 <FileText className="h-4 w-4 mr-2" />
                 Create Blank
               </Button>
+            </div>
+            
+            {/* AI Presentation Generator */}
+            <div className="flex items-center justify-center pt-4 border-t">
+              <div className="flex items-center space-x-3">
+                <div className="flex items-center text-sm text-gray-600">
+                  <Sparkles className="h-4 w-4 mr-2 text-purple-500" />
+                  Or let AI create your presentation:
+                </div>
+                <AIPresentationGenerator />
+              </div>
             </div>
           </CardContent>
         </Card>
