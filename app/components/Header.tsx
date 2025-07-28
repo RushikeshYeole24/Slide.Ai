@@ -1,10 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { usePresentation } from "@/app/contexts/PresentationContext";
+import { useAuth } from "@/app/contexts/AuthContext";
+import {
+  savePresentation,
+  autoSavePresentation,
+} from "@/app/services/firestore";
 import { exportToPDF, exportToHTML } from "@/app/utils/exportUtils";
+import { UserProfile } from "@/app/components/UserProfile";
 import {
   Save,
   Download,
@@ -14,30 +20,97 @@ import {
   Menu,
   X,
   Presentation,
+  ArrowLeft,
+  Cloud,
+  Check,
 } from "lucide-react";
 import { AIContentGenerator } from "@/app/components/AIContentGenerator";
 import { AIPresentationGenerator } from "@/app/components/AIPresentationGenerator";
 
-export function Header() {
-  const {
-    presentation,
-    savePresentation,
-    createNewPresentation,
-    dispatch,
-    isPresentationMode,
-  } = usePresentation();
+interface HeaderProps {
+  onBackToLibrary?: () => void;
+}
+
+export function Header({ onBackToLibrary }: HeaderProps) {
+  const { presentation, createNewPresentation, dispatch, isPresentationMode } =
+    usePresentation();
+
+  const { user } = useAuth();
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [title, setTitle] = useState(presentation?.title || "");
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<
+    "saved" | "saving" | "error" | null
+  >(null);
 
-  const handleSave = () => {
-    if (presentation && title !== presentation.title) {
-      dispatch({
-        type: "UPDATE_THEME",
-        payload: { ...presentation.theme },
-      });
+  // Auto-save when presentation changes (only for existing presentations)
+  useEffect(() => {
+    if (presentation && user && presentation.id && presentation.id !== "new") {
+      console.log('Setting up auto-save for presentation:', presentation.id);
+      const timeoutId = setTimeout(async () => {
+        try {
+          console.log('Auto-saving presentation:', presentation.id);
+          setSaveStatus("saving");
+          const savedId = await autoSavePresentation(user.uid, presentation);
+          
+          // Update presentation ID if it changed (shouldn't happen for existing presentations)
+          if (savedId !== presentation.id) {
+            console.log('Presentation ID changed during auto-save:', presentation.id, '->', savedId);
+            dispatch({
+              type: "SET_PRESENTATION",
+              payload: { ...presentation, id: savedId },
+            });
+          }
+          
+          setSaveStatus("saved");
+          setTimeout(() => setSaveStatus(null), 2000);
+        } catch (error) {
+          console.error("Auto-save failed:", error);
+          setSaveStatus("error");
+          setTimeout(() => setSaveStatus(null), 3000);
+        }
+      }, 2000);
+
+      return () => {
+        console.log('Clearing auto-save timeout for presentation:', presentation.id);
+        clearTimeout(timeoutId);
+      };
     }
-    savePresentation();
+  }, [presentation, user, dispatch]);
+
+  const handleSave = async () => {
+    if (!presentation || !user) {
+      console.error('Cannot save: missing presentation or user', { presentation: !!presentation, user: !!user });
+      return;
+    }
+
+    console.log('Manual save triggered for user:', user.uid, 'presentation:', presentation.id);
+    setIsSaving(true);
+    setSaveStatus("saving");
+
+    try {
+      const savedId = await savePresentation(user.uid, presentation);
+      console.log('Manual save completed. Original ID:', presentation.id, 'Saved ID:', savedId);
+
+      // Update presentation ID if it was a new presentation or changed
+      if (presentation.id === "new" || presentation.id !== savedId) {
+        console.log('Updating presentation ID from', presentation.id, 'to', savedId);
+        dispatch({
+          type: "SET_PRESENTATION",
+          payload: { ...presentation, id: savedId },
+        });
+      }
+
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus(null), 2000);
+    } catch (error) {
+      console.error("Save failed:", error);
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus(null), 3000);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleNewPresentation = () => {
@@ -76,17 +149,31 @@ export function Header() {
   return (
     <header className="border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
       <div className="flex items-center justify-between">
-        {/* Logo and Title */}
+        {/* Logo and Navigation */}
         <div className="flex items-center space-x-4">
-          <div
-            className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() =>
-              dispatch({ type: "SET_PRESENTATION", payload: null })
-            }
-            title="Go to Home"
-          >
-            <Presentation className="h-8 w-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">Slide.Ai</span>
+          <div className="flex items-center space-x-2">
+            {onBackToLibrary && presentation && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onBackToLibrary}
+                className="mr-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
+
+            <div
+              className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={
+                onBackToLibrary ||
+                (() => dispatch({ type: "SET_PRESENTATION", payload: null }))
+              }
+              title="Go to Library"
+            >
+              <Presentation className="h-8 w-8 text-blue-600" />
+              <span className="text-xl font-bold text-gray-900">Slide.Ai</span>
+            </div>
           </div>
 
           {presentation && (
@@ -107,17 +194,49 @@ export function Header() {
             <FileText className="h-4 w-4 mr-2" />
             New
           </Button>
-          
+
           <AIPresentationGenerator />
 
           {presentation && (
             <>
               <AIContentGenerator />
-              
-              <Button variant="outline" size="sm" onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
-                Save
-              </Button>
+
+              {/* Save Status */}
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Cloud className="h-4 w-4 mr-2 animate-pulse" />
+                  ) : saveStatus === "saved" ? (
+                    <Check className="h-4 w-4 mr-2 text-green-600" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  {isSaving ? "Saving..." : "Save"}
+                </Button>
+
+                {saveStatus && (
+                  <span
+                    className={`text-xs ${
+                      saveStatus === "saved"
+                        ? "text-green-600"
+                        : saveStatus === "saving"
+                        ? "text-blue-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {saveStatus === "saved"
+                      ? "Saved"
+                      : saveStatus === "saving"
+                      ? "Saving..."
+                      : "Save failed"}
+                  </span>
+                )}
+              </div>
 
               <Button variant="outline" size="sm" onClick={handleExportPDF}>
                 <Download className="h-4 w-4 mr-2" />
@@ -135,6 +254,9 @@ export function Header() {
               </Button>
             </>
           )}
+
+          {/* User Profile */}
+          <UserProfile />
         </div>
 
         {/* Mobile Menu Button */}
@@ -172,13 +294,13 @@ export function Header() {
               <FileText className="h-4 w-4 mr-2" />
               New Presentation
             </Button>
-            
+
             <AIPresentationGenerator />
 
             {presentation && (
               <>
                 <AIContentGenerator />
-                
+
                 <Button variant="outline" size="sm" onClick={handleSave}>
                   <Save className="h-4 w-4 mr-2" />
                   Save

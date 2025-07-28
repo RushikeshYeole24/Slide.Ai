@@ -170,7 +170,7 @@ export function useOpenAI(options: UseOpenAIOptions = {}) {
 
       // Create new presentation
       const newPresentation = {
-        id: Date.now().toString(),
+        id: "new", // Use "new" for new presentations
         title: outline.title,
         slides: [],
         theme: {

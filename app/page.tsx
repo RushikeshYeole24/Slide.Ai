@@ -1,22 +1,50 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PresentationProvider, usePresentation } from '@/app/contexts/PresentationContext';
+import { ProtectedRoute } from '@/app/components/ProtectedRoute';
 import { Header } from '@/app/components/Header';
 import { SlideThumbnails } from '@/app/components/SlideThumbnails';
 import { SlideEditor } from '@/app/components/SlideEditor';
 import { DesignTools } from '@/app/components/DesignTools';
 import { NavigationControls } from '@/app/components/NavigationControls';
 import { PresentationMode } from '@/app/components/PresentationMode';
-import { WelcomeScreen } from '@/app/components/WelcomeScreen';
+import { PresentationsLibrary } from '@/app/components/PresentationsLibrary';
 import { TemplateGallery } from '@/app/components/TemplateGallery';
+import { Presentation } from '@/app/types/presentation';
 
 function AppContent() {
-  const { presentation, isPresentationMode } = usePresentation();
+  const { presentation, isPresentationMode, dispatch, createNewPresentation } = usePresentation();
+  const [showLibrary, setShowLibrary] = useState(!presentation);
 
-  // Show welcome screen if no presentation
-  if (!presentation) {
-    return <WelcomeScreen />;
+  const handleCreateNew = () => {
+    const title = prompt('Enter presentation title:') || 'New Presentation';
+    createNewPresentation(title);
+    setShowLibrary(false);
+  };
+
+  const handleOpenPresentation = (presentationData: Presentation) => {
+    dispatch({ type: 'SET_PRESENTATION', payload: presentationData });
+    setShowLibrary(false);
+  };
+
+  const handleBackToLibrary = () => {
+    setShowLibrary(true);
+  };
+
+  // Show presentations library
+  if (showLibrary) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+        <Header onBackToLibrary={handleBackToLibrary} />
+        <div className="container mx-auto px-4 py-8">
+          <PresentationsLibrary 
+            onCreateNew={handleCreateNew}
+            onOpenPresentation={handleOpenPresentation}
+          />
+        </div>
+      </div>
+    );
   }
 
   // Show presentation mode
@@ -27,7 +55,7 @@ function AppContent() {
   // Main editor interface
   return (
     <div className="h-screen flex flex-col bg-gray-50">
-      <Header />
+      <Header onBackToLibrary={handleBackToLibrary} />
       
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
@@ -70,8 +98,10 @@ function AppContent() {
 
 export default function Home() {
   return (
-    <PresentationProvider>
-      <AppContent />
-    </PresentationProvider>
+    <ProtectedRoute>
+      <PresentationProvider>
+        <AppContent />
+      </PresentationProvider>
+    </ProtectedRoute>
   );
 }

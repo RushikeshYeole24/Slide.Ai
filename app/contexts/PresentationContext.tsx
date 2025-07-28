@@ -231,27 +231,22 @@ const PresentationContext = createContext<PresentationContextType | undefined>(u
 export function PresentationProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(presentationReducer, initialState);
 
-  // Auto-save functionality
+  // Listen for user changes and clear presentation context
   useEffect(() => {
-    if (state.presentation) {
-      const timeoutId = setTimeout(() => {
-        saveToLocalStorage('current-presentation', state.presentation);
-      }, 1000);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [state.presentation]);
+    const handleUserChanged = () => {
+      console.log('User changed, clearing presentation');
+      dispatch({ type: 'SET_PRESENTATION', payload: null });
+    };
 
-  // Load presentation on mount
-  useEffect(() => {
-    const saved = loadFromLocalStorage<Presentation>('current-presentation');
-    if (saved) {
-      dispatch({ type: 'SET_PRESENTATION', payload: saved });
-    }
+    window.addEventListener('userChanged', handleUserChanged);
+    return () => window.removeEventListener('userChanged', handleUserChanged);
   }, []);
+
+  // Remove localStorage loading - we'll handle this through Firebase
 
   const createNewPresentation = (title: string) => {
     const newPresentation: Presentation = {
-      id: Date.now().toString(),
+      id: "new", // Use "new" as ID for new presentations
       title,
       slides: [],
       theme: defaultTheme,
@@ -263,26 +258,13 @@ export function PresentationProvider({ children }: { children: ReactNode }) {
   };
 
   const savePresentation = () => {
-    if (state.presentation) {
-      saveToLocalStorage('current-presentation', state.presentation);
-      // Also save to presentations list
-      const presentations = loadFromLocalStorage<Presentation[]>('presentations') || [];
-      const existingIndex = presentations.findIndex(p => p.id === state.presentation!.id);
-      if (existingIndex >= 0) {
-        presentations[existingIndex] = state.presentation;
-      } else {
-        presentations.push(state.presentation);
-      }
-      saveToLocalStorage('presentations', presentations);
-    }
+    // This will be handled by the Header component with Firebase
+    console.log('Save triggered from context');
   };
 
   const loadPresentation = (id: string) => {
-    const presentations = loadFromLocalStorage<Presentation[]>('presentations') || [];
-    const presentation = presentations.find(p => p.id === id);
-    if (presentation) {
-      dispatch({ type: 'SET_PRESENTATION', payload: presentation });
-    }
+    // This will be handled by Firebase in the main app
+    console.log('Load presentation:', id);
   };
 
   const getCurrentSlide = (): Slide | null => {
@@ -306,12 +288,13 @@ export function PresentationProvider({ children }: { children: ReactNode }) {
     if (!state.presentation) return;
     const slide = state.presentation.slides.find(s => s.id === slideId);
     if (slide) {
+      const timestamp = Date.now();
       const duplicatedSlide: Slide = {
         ...slide,
-        id: `${slide.id}-copy-${Date.now()}`,
-        elements: slide.elements.map(el => ({
+        id: `${slide.id}-copy-${timestamp}`,
+        elements: slide.elements.map((el, i) => ({
           ...el,
-          id: `${el.id}-copy-${Date.now()}`,
+          id: `${el.id}-copy-${timestamp}-${i}`,
         })),
       };
       const slideIndex = state.presentation.slides.findIndex(s => s.id === slideId);
@@ -320,14 +303,15 @@ export function PresentationProvider({ children }: { children: ReactNode }) {
   };
 
   const addSlideFromTemplate = (template: Template, index?: number) => {
+    const timestamp = Date.now();
     const newSlide: Slide = {
-      id: `slide-${Date.now()}`,
+      id: `slide-${timestamp}`,
       type: template.type,
       background: template.background,
       template: template.id,
       elements: template.elements.map((el, i) => ({
         ...el,
-        id: `element-${Date.now()}-${i}`,
+        id: `element-${timestamp}-${i}`,
       })),
     };
     dispatch({ type: 'ADD_SLIDE', payload: { slide: newSlide, index } });
