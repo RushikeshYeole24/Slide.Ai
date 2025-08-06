@@ -77,24 +77,28 @@ Replace the placeholder values with your actual Firebase config values.
 ## ✨ Features Implemented
 
 ### 🔐 Authentication
+
 - **Google Sign-in**: Users can sign in with their Google accounts
 - **Protected Routes**: App requires authentication to access
 - **User Profile**: Display user info and logout functionality
 - **Session Management**: Automatic session handling
 
 ### ☁️ Cloud Storage
+
 - **Auto-save**: Presentations automatically save to Firestore
 - **Real-time Sync**: Changes sync across devices
 - **User Isolation**: Each user only sees their own presentations
 - **Secure Access**: Firestore security rules protect user data
 
 ### 📚 Presentations Library
+
 - **List View**: See all your presentations in a grid
 - **Search & Filter**: Find presentations quickly
 - **Delete**: Remove unwanted presentations
 - **Last Modified**: See when presentations were last updated
 
 ### 💾 Smart Saving
+
 - **Auto-save**: Changes save automatically after 2 seconds
 - **Save Status**: Visual indicators show save progress
 - **Manual Save**: Force save with save button
@@ -103,6 +107,7 @@ Replace the placeholder values with your actual Firebase config values.
 ## 🎯 User Experience Flow
 
 ### First Time User:
+
 1. **Visit app** → See login screen
 2. **Click "Continue with Google"** → Google OAuth flow
 3. **Authenticated** → See empty presentations library
@@ -110,6 +115,7 @@ Replace the placeholder values with your actual Firebase config values.
 5. **Edit presentation** → Auto-saves to cloud
 
 ### Returning User:
+
 1. **Visit app** → Automatic authentication check
 2. **Authenticated** → See presentations library with saved presentations
 3. **Click presentation** → Open and edit
@@ -118,16 +124,19 @@ Replace the placeholder values with your actual Firebase config values.
 ## 🔒 Security Features
 
 ### Authentication Security:
+
 - **OAuth 2.0**: Secure Google authentication
 - **Session Management**: Automatic token refresh
 - **Secure Logout**: Proper session cleanup
 
 ### Data Security:
+
 - **User Isolation**: Users can only access their own data
 - **Firestore Rules**: Server-side security enforcement
 - **HTTPS Only**: All data transmission encrypted
 
 ### Privacy:
+
 - **No Data Sharing**: User presentations are private
 - **Google Account**: Uses existing Google account (no new passwords)
 - **Local Processing**: AI processing happens on your server
@@ -135,25 +144,30 @@ Replace the placeholder values with your actual Firebase config values.
 ## 🚀 Production Deployment
 
 ### Firebase Configuration:
+
 1. **Upgrade Firestore**: Change from test mode to production mode
 2. **Update Security Rules**: Ensure rules are properly configured
 3. **Set up Monitoring**: Enable Firebase monitoring and alerts
 
 ### Environment Variables:
+
 Ensure all Firebase environment variables are set in your production environment.
 
 ### Domain Configuration:
+
 1. In Firebase Console → Authentication → Settings
 2. Add your production domain to **Authorized domains**
 
 ## 📊 Monitoring & Analytics
 
 ### Firebase Console:
+
 - **Authentication**: Monitor user sign-ins and activity
 - **Firestore**: Track database usage and performance
 - **Performance**: Monitor app performance metrics
 
 ### Usage Tracking:
+
 - **User Growth**: Track new user registrations
 - **Presentation Activity**: Monitor presentation creation and editing
 - **Error Monitoring**: Track and resolve issues
@@ -161,6 +175,7 @@ Ensure all Firebase environment variables are set in your production environment
 ## 🛠 Development Tips
 
 ### Local Development:
+
 ```bash
 # Start development server
 npm run dev
@@ -170,11 +185,13 @@ npm run dev
 ```
 
 ### Testing Authentication:
+
 1. Use a real Google account for testing
 2. Check browser dev tools for authentication errors
 3. Verify Firestore rules in Firebase Console
 
 ### Debugging Firestore:
+
 1. Check Firestore rules simulator in Firebase Console
 2. Monitor Firestore logs for permission errors
 3. Use Firebase Emulator Suite for local testing (optional)
@@ -182,6 +199,7 @@ npm run dev
 ## 🔮 Future Enhancements
 
 ### Potential Features:
+
 - **Presentation Sharing**: Share presentations with other users
 - **Collaboration**: Real-time collaborative editing
 - **Version History**: Track presentation changes over time
@@ -189,6 +207,7 @@ npm run dev
 - **Export Options**: Additional export formats and cloud storage
 
 ### Advanced Features:
+
 - **Team Workspaces**: Organize presentations by team/project
 - **Templates Sharing**: Share custom templates with community
 - **Analytics**: Track presentation views and engagement
@@ -201,14 +220,17 @@ Your SlideMaker application now provides a complete cloud-based presentation sol
 ### Common Issues:
 
 1. **"Firebase not configured"**
+
    - Check that all `NEXT_PUBLIC_FIREBASE_*` variables are set in `.env.local`
    - Restart your development server after adding environment variables
 
 2. **"Permission denied" in Firestore**
+
    - Verify Firestore security rules are correctly configured
    - Ensure user is properly authenticated
 
 3. **Google Sign-in not working**
+
    - Check that Google sign-in is enabled in Firebase Console
    - Verify your domain is in the authorized domains list
 
@@ -218,7 +240,9 @@ Your SlideMaker application now provides a complete cloud-based presentation sol
    - Check Firestore permissions
 
 ### Debug Mode:
+
 Add this to your `.env.local` for detailed Firebase logs:
+
 ```env
 NEXT_PUBLIC_FIREBASE_DEBUG=true
 ```

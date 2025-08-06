@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { usePresentation } from "@/app/contexts/PresentationContext";
 import { themes } from "@/app/data/templates";
+import { ColorPalettePicker } from "@/app/components/ColorPalettePicker";
 import {
   Type,
   Palette,
@@ -308,12 +309,18 @@ export function DesignTools() {
           </div>
         </div>
 
-        {/* Theme Selection */}
+        {/* AI Color Palette Picker */}
         <div className="space-y-3">
           <Label className="text-sm font-medium flex items-center">
             <Paintbrush className="h-4 w-4 mr-2" />
-            Color Themes
+            AI Color Palettes
           </Label>
+          <ColorPalettePicker />
+        </div>
+
+        {/* Theme Selection */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium">Predefined Themes</Label>
           <Select onValueChange={handleThemeChange}>
             <SelectTrigger>
               <SelectValue placeholder="Choose a theme" />

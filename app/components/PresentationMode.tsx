@@ -77,7 +77,10 @@ export function PresentationMode() {
         <div
           className="relative w-full h-full max-w-6xl max-h-[80vh] shadow-2xl"
           style={{ 
-            backgroundColor: currentSlide.background.color,
+            ...(currentSlide.background.type === 'gradient' && currentSlide.background.gradient
+              ? { background: `linear-gradient(${currentSlide.background.gradient.direction}, ${currentSlide.background.gradient.colors.join(', ')})` }
+              : { backgroundColor: currentSlide.background.color }
+            ),
             aspectRatio: '16/9',
           }}
         >

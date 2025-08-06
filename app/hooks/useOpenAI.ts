@@ -165,8 +165,25 @@ export function useOpenAI(options: UseOpenAIOptions = {}) {
    * Create a complete AI-generated presentation
    */
   const createAIPresentation = useCallback(
-    async (options: GeneratePresentationOptions) => {
+    async (options: GeneratePresentationOptions & { colorPalette?: any }) => {
       const outline = await generatePresentationOutline(options);
+
+      // Use provided color palette or default theme
+      const themeColors = options.colorPalette
+        ? {
+            primary: options.colorPalette.primary,
+            secondary: options.colorPalette.secondary,
+            accent: options.colorPalette.accent,
+            background: options.colorPalette.background,
+            text: options.colorPalette.text,
+          }
+        : {
+            primary: "#2563eb",
+            secondary: "#64748b",
+            accent: "#ea580c",
+            background: "#ffffff",
+            text: "#1e293b",
+          };
 
       // Create new presentation
       const newPresentation = {
@@ -174,15 +191,9 @@ export function useOpenAI(options: UseOpenAIOptions = {}) {
         title: outline.title,
         slides: [],
         theme: {
-          id: "professional-blue",
-          name: "Professional Blue",
-          colors: {
-            primary: "#2563eb",
-            secondary: "#64748b",
-            accent: "#ea580c",
-            background: "#ffffff",
-            text: "#1e293b",
-          },
+          id: options.colorPalette ? "ai-generated" : "professional-blue",
+          name: options.colorPalette?.name || "Professional Blue",
+          colors: themeColors,
           fonts: {
             heading: "Inter",
             body: "Inter",
@@ -232,11 +243,14 @@ export function useOpenAI(options: UseOpenAIOptions = {}) {
           const template =
             templates.find((t) => t.id === templateId) || templates[0];
 
-          // Create slide with generated content
+          // Create slide with generated content and apply theme colors
           const newSlide = {
             id: `slide-${Date.now()}-${Math.random()}`,
             type: template.type,
-            background: template.background,
+            background: {
+              ...template.background,
+              color: themeColors.background, // Use theme background color
+            },
             template: templateId,
             elements: template.elements.map((el, i) => {
               let content = el.content;
@@ -254,10 +268,22 @@ export function useOpenAI(options: UseOpenAIOptions = {}) {
                 }
               }
 
+              // Apply theme colors to text elements
+              const elementColor =
+                el.type === "title"
+                  ? themeColors.primary
+                  : el.type === "subtitle"
+                  ? themeColors.secondary
+                  : themeColors.text;
+
               return {
                 ...el,
                 id: `element-${Date.now()}-${i}-${Math.random()}`,
                 content,
+                style: {
+                  ...el.style,
+                  color: elementColor,
+                },
               };
             }),
           };

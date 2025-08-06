@@ -312,18 +312,34 @@ export function SlideEditor() {
   const maxSlideWidth = containerWidth > 0 ? containerWidth : 1000;
   const effectiveZoom = Math.min(zoom, maxSlideWidth / 1000);
 
+  // Handle both solid colors and gradients
+  const getBackgroundStyle = () => {
+    if (currentSlide.background.type === 'gradient' && currentSlide.background.gradient) {
+      const { gradient } = currentSlide.background;
+      return {
+        background: `linear-gradient(${gradient.direction}, ${gradient.colors.join(', ')})`,
+      };
+    } else {
+      return {
+        backgroundColor: currentSlide.background.color,
+      };
+    }
+  };
+
   const slideStyle = {
-    backgroundColor: currentSlide.background.color,
+    ...getBackgroundStyle(),
     transform: `scale(${effectiveZoom})`,
     transformOrigin: "top left",
   };
+
+
 
   return (
     <div className="w-full h-full overflow-auto bg-gray-100 p-4">
       <div className="flex justify-center min-h-full">
         <div
           ref={containerRef}
-          className="relative bg-white shadow-lg cursor-pointer mx-auto"
+          className="relative shadow-lg cursor-pointer mx-auto"
           style={{
             width: 1000 * effectiveZoom,
             height: 600 * effectiveZoom,

@@ -22,6 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { useOpenAI } from "@/app/hooks/useOpenAI";
+import { useColorPalette } from "@/app/hooks/useColorPalette";
 import {
   Sparkles,
   Loader2,
@@ -33,6 +34,7 @@ import {
   AlertCircle,
   Plus,
   Trash2,
+  Palette,
 } from "lucide-react";
 
 export function AIPresentationGenerator() {
@@ -45,6 +47,8 @@ export function AIPresentationGenerator() {
   >("professional");
   const [keyPoints, setKeyPoints] = useState<string[]>([""]);
   const [generatedOutline, setGeneratedOutline] = useState<any>(null);
+  const [autoGenerateColors, setAutoGenerateColors] = useState(true);
+  const [generatedPalette, setGeneratedPalette] = useState<any>(null);
 
   const {
     isLoading,
@@ -54,6 +58,11 @@ export function AIPresentationGenerator() {
     generatePresentationOutline,
     clearError,
   } = useOpenAI();
+
+  const {
+    isLoading: isPaletteLoading,
+    generateColorPalette,
+  } = useColorPalette();
 
   const handleGenerateOutline = async () => {
     if (!topic.trim()) return;
@@ -71,6 +80,23 @@ export function AIPresentationGenerator() {
       });
 
       setGeneratedOutline(result);
+
+      // Auto-generate color palette if enabled
+      if (autoGenerateColors) {
+        try {
+          const palette = await generateColorPalette({
+            topic: topic.trim(),
+            mood: tone === 'professional' ? 'professional' : 
+                  tone === 'creative' ? 'creative' : 
+                  tone === 'academic' ? 'calm' : 'modern',
+            audience: audience.trim() || undefined,
+          });
+          setGeneratedPalette(palette);
+        } catch (paletteError) {
+          console.error("Failed to generate color palette:", paletteError);
+          // Don't fail the whole process if palette generation fails
+        }
+      }
     } catch (err) {
       console.error("Failed to generate outline:", err);
     }
@@ -88,10 +114,12 @@ export function AIPresentationGenerator() {
         keyPoints: keyPoints
           .filter((point) => point.trim())
           .map((point) => point.trim()),
+        colorPalette: generatedPalette, // Pass the generated color palette
       });
 
       setIsOpen(false);
       setGeneratedOutline(null);
+      setGeneratedPalette(null);
       setTopic("");
       setAudience("");
       setKeyPoints([""]);
@@ -247,6 +275,21 @@ export function AIPresentationGenerator() {
             </div>
           )}
 
+          {/* Auto-generate Colors Toggle */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="auto-colors"
+              checked={autoGenerateColors}
+              onChange={(e) => setAutoGenerateColors(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <Label htmlFor="auto-colors" className="text-sm flex items-center">
+              <Palette className="h-4 w-4 mr-1" />
+              Auto-generate color palette
+            </Label>
+          </div>
+
           {/* Generated Outline Preview */}
           {generatedOutline && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -261,6 +304,48 @@ export function AIPresentationGenerator() {
                   </Badge>
                   <p className="font-medium">{generatedOutline.title}</p>
                 </div>
+
+                {/* Generated Color Palette Preview */}
+                {generatedPalette && (
+                  <div>
+                    <Badge variant="secondary" className="mb-2">
+                      <Palette className="h-3 w-3 mr-1" />
+                      Color Palette: {generatedPalette.name}
+                    </Badge>
+                    <div className="bg-white rounded p-3 border">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <div
+                          className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: generatedPalette.primary }}
+                          title="Primary"
+                        />
+                        <div
+                          className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: generatedPalette.secondary }}
+                          title="Secondary"
+                        />
+                        <div
+                          className="w-6 h-6 rounded-full border-2 border-white shadow-sm"
+                          style={{ backgroundColor: generatedPalette.accent }}
+                          title="Accent"
+                        />
+                        <div
+                          className="w-4 h-4 rounded border border-gray-300"
+                          style={{ backgroundColor: generatedPalette.background }}
+                          title="Background"
+                        />
+                        <div
+                          className="w-4 h-4 rounded border border-gray-300"
+                          style={{ backgroundColor: generatedPalette.text }}
+                          title="Text"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        {generatedPalette.description}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <Badge variant="secondary" className="mb-2">
