@@ -1,0 +1,98 @@
+# AI-Powered Presentation Generator - Requirements
+# This is a Next.js/React application with TypeScript
+# For JavaScript/Node.js projects, dependencies are typically managed via package.json
+# This file documents the key requirements and their purposes
+
+# Core Framework & Runtime
+next==13.5.1                    # Next.js React framework for full-stack web applications
+react==18.2.0                   # React library for building user interfaces
+react-dom==18.2.0               # React DOM rendering
+typescript==5.2.2               # TypeScript for type-safe JavaScript
+@types/node==20.6.2             # TypeScript definitions for Node.js
+@types/react==18.2.22           # TypeScript definitions for React
+@types/react-dom==18.2.7        # TypeScript definitions for React DOM
+
+# Styling & UI Components
+tailwindcss==3.3.3              # Utility-first CSS framework
+tailwindcss-animate==1.0.7      # Animation utilities for Tailwind CSS
+autoprefixer==10.4.15           # PostCSS plugin to parse CSS and add vendor prefixes
+postcss==8.4.30                 # CSS post-processor
+class-variance-authority==0.7.0  # Utility for creating type-safe component variants
+clsx==2.1.1                     # Utility for constructing className strings
+tailwind-merge==2.5.2           # Utility to merge Tailwind CSS classes
+
+# UI Component Library (Radix UI)
+@radix-ui/react-dialog==1.1.1           # Modal dialog components
+@radix-ui/react-dropdown-menu==2.1.1    # Dropdown menu components
+@radix-ui/react-select==2.1.1           # Select input components
+@radix-ui/react-slider==1.2.0           # Slider input components
+@radix-ui/react-label==2.1.0            # Label components
+@radix-ui/react-button==1.1.0           # Button components
+@radix-ui/react-toast==1.2.1            # Toast notification components
+@radix-ui/react-tabs==1.1.0             # Tab components
+@radix-ui/react-tooltip==1.1.2          # Tooltip components
+@radix-ui/react-popover==1.1.1          # Popover components
+@radix-ui/react-checkbox==1.1.1         # Checkbox components
+@radix-ui/react-switch==1.1.0           # Switch/toggle components
+
+# Icons & Visual Elements
+lucide-react==0.446.0           # Beautiful & consistent icon library
+embla-carousel-react==8.3.0     # Carousel/slider component library
+
+# Form Handling & Validation
+react-hook-form==7.53.0         # Performant forms with easy validation
+@hookform/resolvers==3.9.0      # Validation resolvers for react-hook-form
+zod==3.23.8                     # TypeScript-first schema validation
+
+# Firebase Integration (Backend Services)
+firebase==12.0.0                # Firebase SDK for authentication, database, storage
+
+# Date & Time Utilities
+date-fns==3.6.0                 # Modern JavaScript date utility library
+react-day-picker==8.10.1        # Date picker component for React
+
+# Charts & Data Visualization
+recharts==2.12.7                # Composable charting library for React
+
+# UI Enhancements
+next-themes==0.3.0              # Theme switching for Next.js applications
+sonner==1.5.0                   # Toast notifications
+vaul==0.9.9                     # Drawer component
+react-resizable-panels==2.1.3   # Resizable panel layouts
+cmdk==1.0.0                     # Command palette component
+input-otp==1.2.4                # OTP input component
+
+# Development & Build Tools
+eslint==8.49.0                  # JavaScript/TypeScript linter
+eslint-config-next==13.5.1      # ESLint configuration for Next.js
+@next/swc-wasm-nodejs==13.5.1   # SWC WebAssembly for Node.js (faster compilation)
+
+# External API Dependencies (Environment Variables Required)
+# OPENROUTER_API_KEY - OpenRouter API for AI-powered content generation
+# NEXT_PUBLIC_FIREBASE_* - Firebase configuration for authentication and data storage
+
+# Key Features Enabled by Dependencies:
+# - AI-powered presentation generation using OpenRouter API
+# - Real-time collaboration via Firebase
+# - Drag-and-drop slide editing
+# - Color palette generation based on topics
+# - Template-based slide creation
+# - Export capabilities
+# - User authentication and data persistence
+# - Responsive design with dark/light theme support
+
+# Installation Instructions:
+# 1. Install Node.js (v18 or higher)
+# 2. Run: npm install (or yarn install)
+# 3. Configure environment variables in .env.local
+# 4. Run: npm run dev (for development)
+# 5. Run: npm run build && npm run start (for production)
+
+# Environment Variables Required:
+# OPENROUTER_API_KEY=your_openrouter_api_key
+# NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key
+# NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+# NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_firebase_project_id
+# NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+# NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+# NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
