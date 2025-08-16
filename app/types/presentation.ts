@@ -14,6 +14,21 @@ export interface TextElement {
   };
 }
 
+export interface BackgroundElement {
+  id: string;
+  type: 'circle' | 'rectangle' | 'triangle' | 'line' | 'dots' | 'wave' | 'arrow';
+  position: { x: number; y: number };
+  size: { width: number; height: number };
+  style: {
+    color: string;
+    opacity: number;
+    rotation?: number;
+    strokeWidth?: number;
+    fill?: boolean;
+  };
+  zIndex: number; // Lower values appear behind text
+}
+
 export interface SlideBackground {
   type: 'solid' | 'gradient';
   color: string;
@@ -29,6 +44,7 @@ export interface Slide {
   type: 'title' | 'content' | 'two-column' | 'image' | 'quote' | 'section' | 'thank-you' | 'blank';
   background: SlideBackground;
   elements: TextElement[];
+  backgroundElements: BackgroundElement[];
   template: string;
 }
 

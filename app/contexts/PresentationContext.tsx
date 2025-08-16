@@ -11,15 +11,18 @@ import {
   Presentation,
   Slide,
   TextElement,
+  BackgroundElement,
   Theme,
   Template,
 } from "@/app/types/presentation";
+import { enhanceAllSlidesWithBackgroundElements } from "@/app/utils/enhanceSlides";
 
 interface PresentationState {
   presentation: Presentation | null;
   isLoading: boolean;
   isEditing: boolean;
   selectedElementId: string | null;
+  selectedBackgroundElementId: string | null;
   isPresentationMode: boolean;
   zoom: number;
 }
@@ -42,6 +45,10 @@ type PresentationAction =
       };
     }
   | { type: "DELETE_ELEMENT"; payload: { slideId: string; elementId: string } }
+  | { type: "ADD_BACKGROUND_ELEMENTS"; payload: { slideId: string; elements: BackgroundElement[] } }
+  | { type: "UPDATE_BACKGROUND_ELEMENT"; payload: { slideId: string; elementId: string; updates: Partial<BackgroundElement> } }
+  | { type: "DELETE_BACKGROUND_ELEMENT"; payload: { slideId: string; elementId: string } }
+  | { type: "SET_SELECTED_BACKGROUND_ELEMENT"; payload: string | null }
   | { type: "SET_SELECTED_ELEMENT"; payload: string | null }
   | { type: "SET_EDITING"; payload: boolean }
   | { type: "SET_PRESENTATION_MODE"; payload: boolean }
@@ -64,6 +71,7 @@ const initialState: PresentationState = {
   isLoading: false,
   isEditing: false,
   selectedElementId: null,
+  selectedBackgroundElementId: null,
   isPresentationMode: false,
   zoom: 1,
 };
@@ -231,8 +239,82 @@ function presentationReducer(
         },
       };
 
+    case "ADD_BACKGROUND_ELEMENTS":
+      if (!state.presentation) return state;
+      return {
+        ...state,
+        presentation: {
+          ...state.presentation,
+          slides: state.presentation.slides.map((slide) =>
+            slide.id === action.payload.slideId
+              ? {
+                  ...slide,
+                  backgroundElements: [
+                    ...(slide.backgroundElements || []),
+                    ...action.payload.elements,
+                  ],
+                }
+              : slide
+          ),
+          updatedAt: new Date(),
+        },
+      };
+
+    case "UPDATE_BACKGROUND_ELEMENT":
+      if (!state.presentation) return state;
+      return {
+        ...state,
+        presentation: {
+          ...state.presentation,
+          slides: state.presentation.slides.map((slide) =>
+            slide.id === action.payload.slideId
+              ? {
+                  ...slide,
+                  backgroundElements: (slide.backgroundElements || []).map((element) =>
+                    element.id === action.payload.elementId
+                      ? { ...element, ...action.payload.updates }
+                      : element
+                  ),
+                }
+              : slide
+          ),
+          updatedAt: new Date(),
+        },
+      };
+
+    case "DELETE_BACKGROUND_ELEMENT":
+      if (!state.presentation) return state;
+      return {
+        ...state,
+        presentation: {
+          ...state.presentation,
+          slides: state.presentation.slides.map((slide) =>
+            slide.id === action.payload.slideId
+              ? {
+                  ...slide,
+                  backgroundElements: (slide.backgroundElements || []).filter(
+                    (element) => element.id !== action.payload.elementId
+                  ),
+                }
+              : slide
+          ),
+          updatedAt: new Date(),
+        },
+      };
+
     case "SET_SELECTED_ELEMENT":
-      return { ...state, selectedElementId: action.payload };
+      return { 
+        ...state, 
+        selectedElementId: action.payload,
+        selectedBackgroundElementId: null, // Clear background selection when selecting text element
+      };
+
+    case "SET_SELECTED_BACKGROUND_ELEMENT":
+      return { 
+        ...state, 
+        selectedBackgroundElementId: action.payload,
+        selectedElementId: null, // Clear text selection when selecting background element
+      };
 
     case "SET_EDITING":
       return { ...state, isEditing: action.payload };
@@ -323,6 +405,7 @@ interface PresentationContextType extends PresentationState {
   previousSlide: () => void;
   duplicateSlide: (slideId: string) => void;
   addSlideFromTemplate: (template: Template, index?: number) => void;
+  enhanceWithBackgroundElements: () => void;
 }
 
 const PresentationContext = createContext<PresentationContextType | undefined>(
@@ -410,6 +493,10 @@ export function PresentationProvider({ children }: { children: ReactNode }) {
           ...el,
           id: `${el.id}-copy-${timestamp}-${i}`,
         })),
+        backgroundElements: (slide.backgroundElements || []).map((el, i) => ({
+          ...el,
+          id: `${el.id}-copy-${timestamp}-${i}`,
+        })),
       };
       const slideIndex = state.presentation.slides.findIndex(
         (s) => s.id === slideId
@@ -432,8 +519,27 @@ export function PresentationProvider({ children }: { children: ReactNode }) {
         ...el,
         id: `element-${timestamp}-${i}`,
       })),
+      backgroundElements: [], // Initialize empty background elements
     };
     dispatch({ type: "ADD_SLIDE", payload: { slide: newSlide, index } });
+  };
+
+  const enhanceWithBackgroundElements = () => {
+    if (!state.presentation) return;
+
+    const enhancedSlides = enhanceAllSlidesWithBackgroundElements(
+      state.presentation.slides,
+      state.presentation.theme.colors
+    );
+
+    dispatch({
+      type: "SET_PRESENTATION",
+      payload: {
+        ...state.presentation,
+        slides: enhancedSlides,
+        updatedAt: new Date(),
+      },
+    });
   };
 
   const value: PresentationContextType = {
@@ -447,6 +553,7 @@ export function PresentationProvider({ children }: { children: ReactNode }) {
     previousSlide,
     duplicateSlide,
     addSlideFromTemplate,
+    enhanceWithBackgroundElements,
   };
 
   return (

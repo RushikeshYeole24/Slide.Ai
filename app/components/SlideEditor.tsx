@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { usePresentation } from "@/app/contexts/PresentationContext";
 import { TextElement } from "@/app/types/presentation";
+import { BackgroundElementRenderer } from "@/app/components/BackgroundElement";
 import { cn } from "@/lib/utils";
 
 interface EditableElementProps {
@@ -185,7 +186,7 @@ function EditableElement({
 }
 
 export function SlideEditor() {
-  const { getCurrentSlide, presentation, selectedElementId, dispatch, zoom } =
+  const { getCurrentSlide, presentation, selectedElementId, selectedBackgroundElementId, dispatch, zoom } =
     usePresentation();
 
   const currentSlide = getCurrentSlide();
@@ -219,31 +220,47 @@ export function SlideEditor() {
   // Handle keyboard events for element deletion
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Only handle delete if an element is selected and we're not editing
+      if (!currentSlide) return;
+
+      // Check if we're not currently editing text (no active input/textarea)
+      const activeElement = document.activeElement;
+      const isEditingText =
+        activeElement?.tagName === "TEXTAREA" ||
+        activeElement?.tagName === "INPUT" ||
+        (activeElement as HTMLElement)?.contentEditable === "true";
+
+      if (isEditingText) return;
+
+      // Handle delete for text elements
       if (
         selectedElementId &&
-        currentSlide &&
         (e.key === "Delete" || e.key === "Backspace")
       ) {
-        // Check if we're not currently editing text (no active input/textarea)
-        const activeElement = document.activeElement;
-        const isEditingText =
-          activeElement?.tagName === "TEXTAREA" ||
-          activeElement?.tagName === "INPUT" ||
-          (activeElement as HTMLElement)?.contentEditable === "true";
+        e.preventDefault();
+        dispatch({
+          type: "DELETE_ELEMENT",
+          payload: {
+            slideId: currentSlide.id,
+            elementId: selectedElementId,
+          },
+        });
+        dispatch({ type: "SET_SELECTED_ELEMENT", payload: null });
+      }
 
-        if (!isEditingText) {
-          e.preventDefault();
-          dispatch({
-            type: "DELETE_ELEMENT",
-            payload: {
-              slideId: currentSlide.id,
-              elementId: selectedElementId,
-            },
-          });
-          // Clear selection after deletion
-          dispatch({ type: "SET_SELECTED_ELEMENT", payload: null });
-        }
+      // Handle delete for background elements
+      if (
+        selectedBackgroundElementId &&
+        (e.key === "Delete" || e.key === "Backspace")
+      ) {
+        e.preventDefault();
+        dispatch({
+          type: "DELETE_BACKGROUND_ELEMENT",
+          payload: {
+            slideId: currentSlide.id,
+            elementId: selectedBackgroundElementId,
+          },
+        });
+        dispatch({ type: "SET_SELECTED_BACKGROUND_ELEMENT", payload: null });
       }
     };
 
@@ -253,11 +270,12 @@ export function SlideEditor() {
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [selectedElementId, currentSlide, dispatch]);
+  }, [selectedElementId, selectedBackgroundElementId, currentSlide, dispatch]);
 
   const handleSlideClick = (e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
       dispatch({ type: "SET_SELECTED_ELEMENT", payload: null });
+      dispatch({ type: "SET_SELECTED_BACKGROUND_ELEMENT", payload: null });
     }
   };
 
@@ -348,6 +366,31 @@ export function SlideEditor() {
           onClick={handleSlideClick}
           onDoubleClick={addTextElement}
         >
+          {/* Render background elements first (behind text) */}
+          {currentSlide.backgroundElements?.map((bgElement) => (
+            <BackgroundElementRenderer
+              key={bgElement.id}
+              element={bgElement}
+              zoom={zoom}
+              isSelected={selectedBackgroundElementId === bgElement.id}
+              onSelect={() =>
+                dispatch({ type: "SET_SELECTED_BACKGROUND_ELEMENT", payload: bgElement.id })
+              }
+              onUpdate={(updates) =>
+                dispatch({
+                  type: "UPDATE_BACKGROUND_ELEMENT",
+                  payload: {
+                    slideId: currentSlide.id,
+                    elementId: bgElement.id,
+                    updates,
+                  },
+                })
+              }
+              slideId={currentSlide.id}
+            />
+          ))}
+
+          {/* Render text elements on top */}
           {currentSlide.elements.map((element) => (
             <EditableElement
               key={element.id}

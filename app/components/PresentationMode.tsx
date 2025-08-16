@@ -3,6 +3,7 @@
 import React, { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { usePresentation } from '@/app/contexts/PresentationContext';
+import { BackgroundElementRenderer } from '@/app/components/BackgroundElement';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -84,6 +85,28 @@ export function PresentationMode() {
             aspectRatio: '16/9',
           }}
         >
+          {/* Render background elements first */}
+          {currentSlide.backgroundElements?.map((bgElement) => (
+            <div
+              key={bgElement.id}
+              style={{
+                position: 'absolute',
+                left: `${(bgElement.position.x / 1000) * 100}%`,
+                top: `${(bgElement.position.y / 600) * 100}%`,
+                width: `${(bgElement.size.width / 1000) * 100}%`,
+                height: `${(bgElement.size.height / 600) * 100}%`,
+                zIndex: bgElement.zIndex,
+              }}
+            >
+              <BackgroundElementRenderer
+                element={bgElement}
+                zoom={0.8} // Adjust zoom for presentation mode
+                // No selection in presentation mode
+              />
+            </div>
+          ))}
+
+          {/* Render text elements on top */}
           {currentSlide.elements.map((element) => (
             <div
               key={element.id}
@@ -103,6 +126,7 @@ export function PresentationMode() {
                 alignItems: element.type === 'title' ? 'center' : 'flex-start',
                 justifyContent: element.style.textAlign === 'center' ? 'center' : 
                                element.style.textAlign === 'right' ? 'flex-end' : 'flex-start',
+                zIndex: 10, // Ensure text is above background elements
               }}
             >
               {element.content}

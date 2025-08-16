@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { getBackendOpenAIService } from "@/app/utils/openai";
 import { usePresentation } from "@/app/contexts/PresentationContext";
 import { templates } from "@/app/data/templates";
+import { generateBackgroundElements, calculateContentBounds } from "@/app/utils/backgroundElements";
 
 interface UseOpenAIOptions {
   // No longer needed - backend handles API key
@@ -125,34 +126,47 @@ export function useOpenAI(options: UseOpenAIOptions = {}) {
       const template =
         templates.find((t) => t.id === templateId) || templates[0];
 
-      // Create slide with generated content
+      // Create slide elements with generated content
+      const slideElements = template.elements.map((el, i) => {
+        let content = el.content;
+
+        // Map generated content to template elements
+        if (el.type === "title") {
+          content = generatedContent.title;
+        } else if (el.type === "subtitle") {
+          content = generatedContent.subtitle || el.content;
+        } else if (el.type === "body" || el.type === "bullet") {
+          if (generatedContent.content.length > 0) {
+            content = generatedContent.content
+              .map((item) => `• ${item}`)
+              .join("\n");
+          }
+        }
+
+        return {
+          ...el,
+          id: `element-${Date.now()}-${i}`,
+          content,
+        };
+      });
+
+      // Calculate content bounds and generate background elements
+      const contentBounds = calculateContentBounds(slideElements);
+      const backgroundElements = generateBackgroundElements({
+        slideType: options.slideType,
+        topic: options.topic,
+        colors: presentation.theme.colors,
+        contentBounds,
+      });
+
+      // Create slide with generated content and background elements
       const newSlide = {
         id: `slide-${Date.now()}`,
         type: template.type,
         background: template.background,
         template: templateId,
-        elements: template.elements.map((el, i) => {
-          let content = el.content;
-
-          // Map generated content to template elements
-          if (el.type === "title") {
-            content = generatedContent.title;
-          } else if (el.type === "subtitle") {
-            content = generatedContent.subtitle || el.content;
-          } else if (el.type === "body" || el.type === "bullet") {
-            if (generatedContent.content.length > 0) {
-              content = generatedContent.content
-                .map((item) => `• ${item}`)
-                .join("\n");
-            }
-          }
-
-          return {
-            ...el,
-            id: `element-${Date.now()}-${i}`,
-            content,
-          };
-        }),
+        elements: slideElements,
+        backgroundElements,
       };
 
       dispatch({ type: "ADD_SLIDE", payload: { slide: newSlide } });
@@ -243,7 +257,54 @@ export function useOpenAI(options: UseOpenAIOptions = {}) {
           const template =
             templates.find((t) => t.id === templateId) || templates[0];
 
-          // Create slide with generated content and apply theme colors
+          // Create slide elements with generated content and apply theme colors
+          const slideElements = template.elements.map((el, i) => {
+            let content = el.content;
+
+            // Map generated content to template elements
+            if (el.type === "title") {
+              content = generatedContent.title;
+            } else if (el.type === "subtitle") {
+              content = generatedContent.subtitle || el.content;
+            } else if (el.type === "body" || el.type === "bullet") {
+              if (generatedContent.content.length > 0) {
+                content = generatedContent.content
+                  .map((item) => `• ${item}`)
+                  .join("\n");
+              }
+            }
+
+            // Apply theme colors to text elements
+            const elementColor =
+              el.type === "title"
+                ? themeColors.primary
+                : el.type === "subtitle"
+                ? themeColors.secondary
+                : themeColors.text;
+
+            return {
+              ...el,
+              id: `element-${Date.now()}-${i}-${Math.random()}`,
+              content,
+              style: {
+                ...el.style,
+                color: elementColor,
+              },
+            };
+          });
+
+          // Calculate content bounds to avoid overlapping background elements
+          const contentBounds = calculateContentBounds(slideElements);
+
+          // Generate background elements for this slide
+          const backgroundElements = generateBackgroundElements({
+            slideType: slideInfo.type,
+            topic: slideInfo.title,
+            colors: themeColors,
+            contentBounds,
+          });
+
+          // Create slide with generated content, theme colors, and background elements
           const newSlide = {
             id: `slide-${Date.now()}-${Math.random()}`,
             type: template.type,
@@ -252,40 +313,8 @@ export function useOpenAI(options: UseOpenAIOptions = {}) {
               color: themeColors.background, // Use theme background color
             },
             template: templateId,
-            elements: template.elements.map((el, i) => {
-              let content = el.content;
-
-              // Map generated content to template elements
-              if (el.type === "title") {
-                content = generatedContent.title;
-              } else if (el.type === "subtitle") {
-                content = generatedContent.subtitle || el.content;
-              } else if (el.type === "body" || el.type === "bullet") {
-                if (generatedContent.content.length > 0) {
-                  content = generatedContent.content
-                    .map((item) => `• ${item}`)
-                    .join("\n");
-                }
-              }
-
-              // Apply theme colors to text elements
-              const elementColor =
-                el.type === "title"
-                  ? themeColors.primary
-                  : el.type === "subtitle"
-                  ? themeColors.secondary
-                  : themeColors.text;
-
-              return {
-                ...el,
-                id: `element-${Date.now()}-${i}-${Math.random()}`,
-                content,
-                style: {
-                  ...el.style,
-                  color: elementColor,
-                },
-              };
-            }),
+            elements: slideElements,
+            backgroundElements,
           };
 
           dispatch({ type: "ADD_SLIDE", payload: { slide: newSlide } });

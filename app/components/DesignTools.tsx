@@ -123,11 +123,11 @@ const fontFamilies = [
 ];
 
 export function DesignTools() {
-  const { getCurrentSlide, selectedElementId, dispatch, zoom } =
+  const { getCurrentSlide, selectedElementId, selectedBackgroundElementId, dispatch, zoom, enhanceWithBackgroundElements } =
     usePresentation();
 
   const [showColorPicker, setShowColorPicker] = useState<
-    "text" | "background" | null
+    "text" | "background" | "background-element" | null
   >(null);
   const [showGradients, setShowGradients] = useState(false);
   const [backgroundType, setBackgroundType] = useState<"solid" | "gradient">(
@@ -137,6 +137,9 @@ export function DesignTools() {
   const currentSlide = getCurrentSlide();
   const selectedElement = currentSlide?.elements.find(
     (el) => el.id === selectedElementId
+  );
+  const selectedBackgroundElement = currentSlide?.backgroundElements?.find(
+    (el) => el.id === selectedBackgroundElementId
   );
 
   const handleBackgroundColorChange = (color: string) => {
@@ -161,6 +164,34 @@ export function DesignTools() {
         elementId: selectedElement.id,
         updates: {
           style: { ...selectedElement.style, ...updates },
+        },
+      },
+    });
+  };
+
+  const handleBackgroundElementStyleChange = (updates: any) => {
+    if (!currentSlide || !selectedBackgroundElement) return;
+    dispatch({
+      type: "UPDATE_BACKGROUND_ELEMENT",
+      payload: {
+        slideId: currentSlide.id,
+        elementId: selectedBackgroundElement.id,
+        updates: {
+          style: { ...selectedBackgroundElement.style, ...updates },
+        },
+      },
+    });
+  };
+
+  const handleBackgroundElementSizeChange = (updates: any) => {
+    if (!currentSlide || !selectedBackgroundElement) return;
+    dispatch({
+      type: "UPDATE_BACKGROUND_ELEMENT",
+      payload: {
+        slideId: currentSlide.id,
+        elementId: selectedBackgroundElement.id,
+        updates: {
+          size: { ...selectedBackgroundElement.size, ...updates },
         },
       },
     });
@@ -316,6 +347,24 @@ export function DesignTools() {
             AI Color Palettes
           </Label>
           <ColorPalettePicker />
+        </div>
+
+        {/* Background Elements Enhancement */}
+        <div className="space-y-3">
+          <Label className="text-sm font-medium flex items-center">
+            <Layers className="h-4 w-4 mr-2" />
+            Background Elements
+          </Label>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={enhanceWithBackgroundElements}
+          >
+            Add Background Elements
+          </Button>
+          <p className="text-xs text-gray-500">
+            Automatically add decorative background elements to all slides based on their content and type.
+          </p>
         </div>
 
         {/* Theme Selection */}
@@ -583,9 +632,142 @@ export function DesignTools() {
           </>
         )}
 
-        {!selectedElement && (
+        {/* Background Element Formatting */}
+        {selectedBackgroundElement && (
+          <>
+            <div className="space-y-3">
+              <Label className="text-sm font-medium flex items-center">
+                <Layers className="h-4 w-4 mr-2" />
+                Background Element
+              </Label>
+
+              {/* Element Color */}
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-600">Element Color</Label>
+                <div className="relative">
+                  <Button
+                    variant="outline"
+                    className="w-full h-8 p-1"
+                    onClick={() =>
+                      setShowColorPicker(
+                        showColorPicker === "background-element" ? null : "background-element"
+                      )
+                    }
+                  >
+                    <div
+                      className="w-full h-full rounded border"
+                      style={{ backgroundColor: selectedBackgroundElement.style.color }}
+                    />
+                  </Button>
+
+                  {showColorPicker === "background-element" && (
+                    <div className="absolute top-10 left-0 z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-3">
+                      <div className="grid grid-cols-7 gap-2">
+                        {colorPalette.map((color) => (
+                          <button
+                            key={color}
+                            className="w-6 h-6 rounded border border-gray-300 cursor-pointer hover:scale-110 transition-transform"
+                            style={{ backgroundColor: color }}
+                            onClick={() => {
+                              handleBackgroundElementStyleChange({ color });
+                              setShowColorPicker(null);
+                            }}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Opacity */}
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-600">
+                  Opacity: {Math.round(selectedBackgroundElement.style.opacity * 100)}%
+                </Label>
+                <Slider
+                  value={[selectedBackgroundElement.style.opacity * 100]}
+                  onValueChange={(value) => handleBackgroundElementStyleChange({ opacity: value[0] / 100 })}
+                  min={10}
+                  max={100}
+                  step={5}
+                  className="w-full"
+                />
+              </div>
+
+              {/* Size Controls */}
+              <div className="space-y-2">
+                <Label className="text-xs text-gray-600">Size</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs text-gray-500">Width</Label>
+                    <Slider
+                      value={[selectedBackgroundElement.size.width]}
+                      onValueChange={(value) => handleBackgroundElementSizeChange({ width: value[0] })}
+                      min={20}
+                      max={400}
+                      step={10}
+                      className="w-full"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-gray-500">Height</Label>
+                    <Slider
+                      value={[selectedBackgroundElement.size.height]}
+                      onValueChange={(value) => handleBackgroundElementSizeChange({ height: value[0] })}
+                      min={20}
+                      max={400}
+                      step={10}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Rotation (if supported) */}
+              {selectedBackgroundElement.style.rotation !== undefined && (
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-600">
+                    Rotation: {selectedBackgroundElement.style.rotation || 0}°
+                  </Label>
+                  <Slider
+                    value={[selectedBackgroundElement.style.rotation || 0]}
+                    onValueChange={(value) => handleBackgroundElementStyleChange({ rotation: value[0] })}
+                    min={0}
+                    max={360}
+                    step={15}
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              {/* Delete Button */}
+              <Button
+                variant="destructive"
+                size="sm"
+                className="w-full"
+                onClick={() => {
+                  if (currentSlide && selectedBackgroundElement) {
+                    dispatch({
+                      type: "DELETE_BACKGROUND_ELEMENT",
+                      payload: {
+                        slideId: currentSlide.id,
+                        elementId: selectedBackgroundElement.id,
+                      },
+                    });
+                    dispatch({ type: "SET_SELECTED_BACKGROUND_ELEMENT", payload: null });
+                  }
+                }}
+              >
+                Delete Background Element
+              </Button>
+            </div>
+          </>
+        )}
+
+        {!selectedElement && !selectedBackgroundElement && (
           <div className="text-center text-gray-500 text-sm py-8">
-            Select a text element to edit its properties
+            Select a text element or background element to edit its properties
           </div>
         )}
       </div>
